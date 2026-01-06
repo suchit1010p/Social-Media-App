@@ -1,0 +1,24 @@
+.sidebar {
+  width: 220px;
+  background-color: #ffffff;
+  border-right: 1px solid #ddd;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.sidebar-link {
+  text-decoration: none;
+  color: #333;
+  padding: 10px;
+  border-radius: 6px;
+}
+
+.sidebar-link.active {
+  background-color: #e5e5e5;
+  font-weight: bold;
+}
+.sidebar-link:hover {
+  background-color: #f0f0f0;
+}
