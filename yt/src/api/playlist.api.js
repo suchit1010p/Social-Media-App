@@ -1,29 +1,29 @@
 import api from "./axios";
 
-// Create playlist
+// create playlist
 export const createPlaylist = (data) =>
   api.post("/playlists", data);
 
-// Get all playlists of user
+// get user playlists
 export const getUserPlaylists = () =>
   api.get("/playlists");
 
-// Get playlist by ID
+// get playlist by id
 export const getPlaylistById = (playlistId) =>
   api.get(`/playlists/${playlistId}`);
 
-// Add video to playlist
+// add video to playlist
 export const addVideoToPlaylist = (playlistId, videoId) =>
   api.post(`/playlists/${playlistId}/videos/${videoId}`);
 
-// Remove video from playlist
+// remove video from playlist
 export const removeVideoFromPlaylist = (playlistId, videoId) =>
   api.delete(`/playlists/${playlistId}/videos/${videoId}`);
 
-// Update playlist
+// update playlist
 export const updatePlaylist = (playlistId, data) =>
   api.patch(`/playlists/${playlistId}`, data);
 
-// Delete playlist
+// delete playlist
 export const deletePlaylist = (playlistId) =>
   api.delete(`/playlists/${playlistId}`);

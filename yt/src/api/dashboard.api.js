@@ -1,5 +1,5 @@
 import api from "./axios";
 
-// Get dashboard statistics
-export const getDashboardStats = () =>
+// get channel stats
+export const getChannelStats = () =>
   api.get("/dashboard");

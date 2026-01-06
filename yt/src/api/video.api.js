@@ -1,38 +1,21 @@
 import api from "./axios";
 
-// Get all videos (home feed)
-export const getAllVideos = ({
-  page = 1,
-  limit = 10,
-  query,
-  sortBy = "createdAt",
-  sortType = "desc",
-  userId,
-}) => {
-  return api.get("/videos", {
-    params: {
-      page,
-      limit,
-      query,
-      sortBy,
-      sortType,
-      userId,
-    },
-  });
-};
+// get all videos
+export const getAllVideos = (params) =>
+  api.get("/videos", { params });
 
-// Publish video
-export const publishVideo = (formData) =>
-  api.post("/videos/publishVideo", formData);
-
-// Get video by ID
+// get video by id
 export const getVideoById = (videoId) =>
   api.get(`/videos/${videoId}`);
 
-// Update video details
-export const updateVideoDetails = (videoId, data) =>
+// publish video
+export const publishVideo = (formData) =>
+  api.post("/videos/publishVideo", formData);
+
+// update video
+export const updateVideo = (videoId, data) =>
   api.patch(`/videos/${videoId}`, data);
 
-// Delete video
+// delete video
 export const deleteVideo = (videoId) =>
   api.delete(`/videos/${videoId}`);

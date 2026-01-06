@@ -1,13 +1,13 @@
 import api from "./axios";
 
-// Like / Unlike video
+// toggle video like
 export const toggleVideoLike = (videoId) =>
   api.post(`/likes/video/${videoId}`);
 
-// Like / Unlike comment
+// toggle comment like
 export const toggleCommentLike = (commentId) =>
   api.post(`/likes/comment/${commentId}`);
 
-// Get liked videos
-export const getLikedVideos = () =>
-  api.get("/likes/videos");
+// get liked videos
+export const getLikedVideos = (params) =>
+  api.get("/likes/videos", { params });
