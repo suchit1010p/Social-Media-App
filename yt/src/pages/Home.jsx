@@ -125,7 +125,7 @@ const Home = () => {
                 </h4>
                 <p className="channel-name">{video.owner?.fullName || "Unknown Channel"}</p>
                 <p className="video-stats">
-                  {video.views || 0} views • {timeAgo(video.createdAt)}
+                  {timeAgo(video.createdAt)}
                 </p>
               </div>
             </div>

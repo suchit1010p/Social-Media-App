@@ -1,4 +1,4 @@
-import {isValidObjectId} from "mongoose";
+import { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Like } from "../models/like.model.js";
 import { ApiError } from "../utils/ApiError.js";
@@ -18,7 +18,7 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         likedBy: userId
     });
 
-    if(existingLike) {
+    if (existingLike) {
         await existingLike.deleteOne();
         return res.status(200).json(new ApiResponse(200, null, "Video unliked successfully"));
     }
@@ -32,24 +32,24 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
 });
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
-    
+
     const { commentId } = req.params;
     const userId = req.user._id;
-    
+
     if (!isValidObjectId(commentId)) {
         throw new ApiError(400, "Invalid comment ID");
     }
-    
+
     const existingLike = await Like.findOne({
         comment: commentId,
         likedBy: userId
     });
-    
-    if(existingLike) {
+
+    if (existingLike) {
         await existingLike.deleteOne();
         return res.status(200).json(new ApiResponse(200, null, "Comment unliked successfully"));
     }
-    
+
 
     const videoId = await Comment.findById(commentId).select("video");
 

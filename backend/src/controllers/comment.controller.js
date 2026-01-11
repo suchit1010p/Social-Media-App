@@ -1,4 +1,4 @@
-import mongoose , { isValidObjectId } from "mongoose";
+import mongoose, { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -69,9 +69,9 @@ const getCommentsByVideo = asyncHandler(async (req, res) => {
                 likesCount: { $size: "$likes" },
                 isLiked: {
                     $cond: {
-                    if: { $in: [req.user?._id, "$likes.likedBy"] },
-                    then: true,
-                    else: false
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
                     }
                 }
             }
@@ -90,14 +90,18 @@ const getCommentsByVideo = asyncHandler(async (req, res) => {
             $project: {
                 "owner.username": 1,
                 "owner.fullName": 1,
+                "owner.avatar": 1,
                 "owner._id": 1,
                 content: 1,
                 video: 1,
                 likesCount: 1,
                 isLiked: 1,
+                createdAt: 1,
+                updatedAt: 1
             }
         }
-        ]);
+    ]);
+
 
     res.status(200).json(new ApiResponse(true, comments, "Comments fetched successfully"));
 });
@@ -119,7 +123,7 @@ const updateComment = asyncHandler(async (req, res) => {
     if (comment.owner.toString() !== userId.toString()) {
         throw new ApiError(403, "You are not authorized to update this comment");
     }
-    
+
     if (!content || content.trim() === "") {
         throw new ApiError(400, "Comment content cannot be empty");
     }
@@ -144,7 +148,7 @@ const deleteComment = asyncHandler(async (req, res) => {
         throw new ApiError(404, "Comment not found");
     }
 
-    if(comment.owner.toString() !== userId.toString()) {
+    if (comment.owner.toString() !== userId.toString()) {
         throw new ApiError(403, "You are not authorized to delete this comment");
     }
 

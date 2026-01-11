@@ -115,6 +115,9 @@ export const useUpdateAvatar = () => {
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", "channelStats"],
+      });
     },
   });
 };
@@ -130,6 +133,9 @@ export const useUpdateCoverImage = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", "channelStats"],
       });
     },
   });
