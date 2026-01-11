@@ -4,8 +4,8 @@ import {
   useToggleSubscription
 } from "../features/channel/channel.hooks";
 import { useCurrentUser } from "../features/auth/auth.hooks";
-import "./channel.css";
-import "./home.css";
+import "./styles/channel.css";
+import "./styles/home.css";
 
 const Channel = () => {
   const { username } = useParams();

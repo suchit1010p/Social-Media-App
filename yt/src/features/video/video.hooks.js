@@ -83,6 +83,10 @@ export const useDeleteVideo = () => {
       queryClient.invalidateQueries({
         queryKey: ["videos"],
       });
+      // refresh dashboard stats
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", "channelStats"],
+      });
     },
   });
 };

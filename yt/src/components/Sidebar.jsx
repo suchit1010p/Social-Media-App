@@ -1,27 +1,34 @@
 import { NavLink } from "react-router-dom";
+import { FaHome, FaList, FaHistory, FaTv } from "react-icons/fa";
+import { AiFillLike } from "react-icons/ai";
 import "./sidebar.css";
 
 const Sidebar = () => {
   return (
     <aside className="sidebar">
       <NavLink to="/" end className="sidebar-link">
-        Home
+        <FaHome className="icon" />
+        <span>Home</span>
       </NavLink>
 
       <NavLink to="/playlists" className="sidebar-link">
-        Playlists
+        <FaList className="icon" />
+        <span>Playlists</span>
       </NavLink>
 
       <NavLink to="/liked-videos" className="sidebar-link">
-        Liked Videos
+        <AiFillLike className="icon" />
+        <span>Liked</span>
       </NavLink>
 
       <NavLink to="/history" className="sidebar-link">
-        History
+        <FaHistory className="icon" />
+        <span>History</span>
       </NavLink>
 
       <NavLink to="/dashboard" className="sidebar-link">
-        Dashboard
+        <FaTv className="icon" />
+        <span>Dashboard</span>
       </NavLink>
     </aside>
   );

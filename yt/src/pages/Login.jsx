@@ -1,13 +1,15 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useLogin, useCurrentUser } from "../features/auth/auth.hooks";
-import "./auth.css";
+import "./styles/auth.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const { data: user } = useCurrentUser();
+  const isLoggedOut = location.state?.loggedOut;
+
+  const { data: user } = useCurrentUser({ enabled: !isLoggedOut });
   const loginMutation = useLogin();
 
   const [email, setEmail] = useState("");
@@ -37,16 +39,18 @@ const Login = () => {
   return (
     <div className="auth-container">
       <form className="auth-card" onSubmit={handleSubmit}>
-        <h2>Login to VidPlay</h2>
+        <h2>Welcome Back</h2>
+        <p className="auth-subtitle">Login to your VidPlay account</p>
 
         <div className="auth-field">
           <label>Email</label>
           <input
             type="email"
-            placeholder="Enter your email"
+            placeholder="name@example.com"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
           />
         </div>
 
@@ -54,18 +58,19 @@ const Login = () => {
           <label>Password</label>
           <input
             type="password"
-            placeholder="Enter your password"
+            placeholder="••••••••"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="current-password"
           />
         </div>
 
         {loginMutation.isError && (
-          <p className="auth-error">
+          <div className="auth-error">
             {loginMutation.error?.response?.data?.message ||
               "Login failed. Please try again."}
-          </p>
+          </div>
         )}
 
         <button
@@ -73,12 +78,12 @@ const Login = () => {
           className="auth-btn"
           disabled={loginMutation.isLoading}
         >
-          {loginMutation.isLoading ? "Logging in..." : "Login"}
+          {loginMutation.isLoading ? "Logging in..." : "Sign In"}
         </button>
 
         <p className="auth-footer">
           Don’t have an account?{" "}
-          <Link to="/register">Register</Link>
+          <Link to="/register">Create account</Link>
         </p>
       </form>
     </div>

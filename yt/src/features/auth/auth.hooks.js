@@ -16,12 +16,13 @@ import {
 /* =========================
    GET CURRENT USER
 ========================= */
-export const useCurrentUser = () => {
+export const useCurrentUser = (options = {}) => {
   return useQuery({
     queryKey: ["auth", "currentUser"],
     queryFn: getCurrentUser,
     retry: false, // important for auth
     select: (res) => res.data.data,
+    ...options,
   });
 };
 

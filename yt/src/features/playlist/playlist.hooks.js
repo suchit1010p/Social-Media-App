@@ -61,6 +61,9 @@ export const useAddVideoToPlaylist = () => {
       queryClient.invalidateQueries({
         queryKey: ["playlist", variables.playlistId],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["playlists"],
+      });
     },
   });
 };
@@ -77,6 +80,9 @@ export const useRemoveVideoFromPlaylist = () => {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({
         queryKey: ["playlist", variables.playlistId],
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["playlists"],
       });
     },
   });

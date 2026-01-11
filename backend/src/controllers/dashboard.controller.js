@@ -20,11 +20,11 @@ const getChannelStats = asyncHandler(async (req, res) => {
                 foreignField: "owner",
                 as: "videos"
             }
-        },{
+        }, {
             $lookup: {
                 from: "subscriptions",
                 localField: "_id",
-                foreignField: "channel",    
+                foreignField: "channel",
                 as: "subscribers"
             }
         },
@@ -38,34 +38,35 @@ const getChannelStats = asyncHandler(async (req, res) => {
         },
         {
             $addFields: {
-                totalVideos: {$size: "$videos"},
-                totalSubscribers: {$size: "$subscribers"},
-                totalLikes: {$size: "$likes"},
-                totalViews: {$sum: "$videos.views"}
+                totalVideos: { $size: "$videos" },
+                totalSubscribers: { $size: "$subscribers" },
+                totalLikes: { $size: "$likes" },
+                totalViews: { $sum: "$videos.views" }
             }
         },
         {
             $project: {
                 username: 1,
                 fullName: 1,
+                avatar: 1,
+                coverImage: 1,
                 videos: 1,
                 totalVideos: 1,
-                subscribers: 1,
                 totalSubscribers: 1,
                 totalLikes: 1,
                 totalViews: 1
             }
         }
     ])
-    
+
 
     return res.status(200)
         .json(new ApiResponse(
-            200, 
-            channel[0], 
+            200,
+            channel[0],
             "Channel stats fetched successfully with all the details."
         )
-    );
+        );
 });
 
-export {getChannelStats};
+export { getChannelStats };

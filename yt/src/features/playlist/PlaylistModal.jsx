@@ -25,7 +25,7 @@ const PlaylistModal = ({ videoId, onClose }) => {
   };
 
   const toggleVideo = (playlist) => {
-    const isAdded = playlist.videos.includes(videoId);
+    const isAdded = playlist.videos.some((video) => (video._id || video) === videoId);
 
     if (isAdded) {
       removeVideo.mutate({ playlistId: playlist._id, videoId });

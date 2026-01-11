@@ -1,19 +1,35 @@
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useUserPlaylists } from "../features/playlist/playlist.hooks";
-import "./playlists.css";
+import CreatePlaylistModal from "../features/playlist/CreatePlaylistModal";
+import { FaPlus } from "react-icons/fa";
+import "./styles/playlists.css";
+import "../features/playlist/create-playlist.css";
 
 const Playlists = () => {
   const navigate = useNavigate();
   const { data: playlists = [], isLoading } = useUserPlaylists();
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
-  if (isLoading) return <h2>Loading playlists...</h2>;
+  if (isLoading) return <div className="playlists-loading">Loading playlists...</div>;
 
   return (
     <div className="playlists-page">
-      <h2>Your Playlists</h2>
+      <div className="playlists-header-row">
+        <h2>Your Playlists</h2>
+        <button
+          className="create-playlist-btn"
+          onClick={() => setShowCreateModal(true)}
+        >
+          <FaPlus /> Create Playlist
+        </button>
+      </div>
 
       {playlists.length === 0 && (
-        <p>You haven’t created any playlists yet.</p>
+        <div className="no-playlists">
+          <p>You haven’t created any playlists yet.</p>
+          <button onClick={() => setShowCreateModal(true)}>Create One Now</button>
+        </div>
       )}
 
       <div className="playlists-grid">
@@ -26,6 +42,7 @@ const Playlists = () => {
               key={playlist._id}
               className="playlist-card"
               onClick={() => navigate(`/playlists/${playlist._id}`)}
+              title={playlist.name}
             >
               {/* THUMBNAIL WITH SUBTLE STACK */}
               <div className="playlist-thumb-wrapper">
@@ -59,6 +76,10 @@ const Playlists = () => {
           );
         })}
       </div>
+
+      {showCreateModal && (
+        <CreatePlaylistModal onClose={() => setShowCreateModal(false)} />
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAllVideos } from "../features/video/video.hooks";
-import "./home.css";
+import "./styles/home.css";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -38,6 +38,22 @@ const Home = () => {
     return <h2>Failed to load videos</h2>;
   }
 
+  // Simple time ago helper
+  const timeAgo = (date) => {
+    const seconds = Math.floor((new Date() - new Date(date)) / 1000);
+    let interval = seconds / 31536000;
+    if (interval > 1) return Math.floor(interval) + " years ago";
+    interval = seconds / 2592000;
+    if (interval > 1) return Math.floor(interval) + " months ago";
+    interval = seconds / 86400;
+    if (interval > 1) return Math.floor(interval) + " days ago";
+    interval = seconds / 3600;
+    if (interval > 1) return Math.floor(interval) + " hours ago";
+    interval = seconds / 60;
+    if (interval > 1) return Math.floor(interval) + " minutes ago";
+    return Math.floor(seconds) + " seconds ago";
+  };
+
   const {
     videos = [],
     totalPages = 1,
@@ -48,36 +64,40 @@ const Home = () => {
     <div className="home">
       {/* SEARCH & SORT BAR */}
       <div className="home-controls">
-        <input
-          type="text"
-          placeholder="Search videos..."
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-        />
+        <div className="search-wrapper">
+          <input
+            type="text"
+            placeholder="Search"
+            value={searchInput}
+            onChange={(e) => setSearchInput(e.target.value)}
+          />
+          <button className="search-btn">🔍</button>
+        </div>
 
+        <div className="filter-wrapper">
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+          >
+            <option value="createdAt">Newest</option>
+            <option value="views">Most Viewed</option>
+            <option value="title">Title</option>
+          </select>
 
-        <select
-          value={sortBy}
-          onChange={(e) => setSortBy(e.target.value)}
-        >
-          <option value="createdAt">Newest</option>
-          <option value="views">Most Viewed</option>
-          <option value="title">Title</option>
-        </select>
-
-        <select
-          value={sortType}
-          onChange={(e) => setSortType(e.target.value)}
-        >
-          <option value="desc">Descending</option>
-          <option value="asc">Ascending</option>
-        </select>
+          <select
+            value={sortType}
+            onChange={(e) => setSortType(e.target.value)}
+          >
+            <option value="desc">Descending</option>
+            <option value="asc">Ascending</option>
+          </select>
+        </div>
       </div>
 
       {/* VIDEO GRID */}
       <div className="video-grid">
         {videos.length === 0 && (
-          <p>No videos found</p>
+          <p className="no-videos">No videos found</p>
         )}
 
         {videos.map((video) => (
@@ -86,15 +106,28 @@ const Home = () => {
             className="video-card"
             onClick={() => navigate(`/video/${video._id}`)}
           >
-            <img
-              src={video.thumbnail}
-              alt={video.title}
-              className="video-thumbnail"
-            />
+            <div className="thumbnail-container">
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                className="video-thumbnail"
+              />
+              <span className="duration-badge">{video.duration ? (video.duration / 60).toFixed(2) : "10:00"}</span>
+            </div>
 
-            <div className="video-info">
-              <h4>{video.title}</h4>
-              <p>{video.views || 0} views</p>
+            <div className="video-details">
+              <div className="channel-avatar">
+                <img src={video.owner?.avatar || "https://via.placeholder.com/40"} alt="avatar" />
+              </div>
+              <div className="video-meta">
+                <h4 title={video.title}>
+                  {video.title.length > 50 ? video.title.slice(0, 50) + "..." : video.title}
+                </h4>
+                <p className="channel-name">{video.owner?.fullName || "Unknown Channel"}</p>
+                <p className="video-stats">
+                  {video.views || 0} views • {timeAgo(video.createdAt)}
+                </p>
+              </div>
             </div>
           </div>
         ))}

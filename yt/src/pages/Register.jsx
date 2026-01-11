@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useRegister, useCurrentUser } from "../features/auth/auth.hooks";
-import "./auth.css";
+import "./styles/auth.css";
 
 const Register = () => {
   const navigate = useNavigate();
@@ -66,14 +66,15 @@ const Register = () => {
         onSubmit={handleSubmit}
         encType="multipart/form-data"
       >
-        <h2>Create your account</h2>
+        <h2>Create an Account</h2>
+        <p className="auth-subtitle">Join the community today</p>
 
         <div className="auth-field">
           <label>Full Name</label>
           <input
             type="text"
             name="fullName"
-            placeholder="Enter your full name"
+            placeholder="e.g. John Doe"
             value={form.fullName}
             onChange={handleChange}
             required
@@ -85,7 +86,7 @@ const Register = () => {
           <input
             type="text"
             name="username"
-            placeholder="Choose a username"
+            placeholder="e.g. johndoe123"
             value={form.username}
             onChange={handleChange}
             required
@@ -97,7 +98,7 @@ const Register = () => {
           <input
             type="email"
             name="email"
-            placeholder="Enter your email"
+            placeholder="name@example.com"
             value={form.email}
             onChange={handleChange}
             required
@@ -109,7 +110,7 @@ const Register = () => {
           <input
             type="password"
             name="password"
-            placeholder="Create a password"
+            placeholder="Create a strong password"
             value={form.password}
             onChange={handleChange}
             required
@@ -123,6 +124,7 @@ const Register = () => {
             accept="image/*"
             onChange={(e) => setAvatar(e.target.files[0])}
             required
+            className="file-input"
           />
         </div>
 
@@ -132,14 +134,15 @@ const Register = () => {
             type="file"
             accept="image/*"
             onChange={(e) => setCoverImage(e.target.files[0])}
+            className="file-input"
           />
         </div>
 
         {registerMutation.isError && (
-          <p className="auth-error">
+          <div className="auth-error">
             {registerMutation.error?.response?.data?.message ||
               "Registration failed. Please try again."}
-          </p>
+          </div>
         )}
 
         <button
@@ -147,12 +150,12 @@ const Register = () => {
           className="auth-btn"
           disabled={registerMutation.isLoading}
         >
-          {registerMutation.isLoading ? "Creating account..." : "Register"}
+          {registerMutation.isLoading ? "Creating account..." : "Sign Up"}
         </button>
 
         <p className="auth-footer">
           Already have an account?{" "}
-          <Link to="/login">Login</Link>
+          <Link to="/login">Sign in</Link>
         </p>
       </form>
     </div>

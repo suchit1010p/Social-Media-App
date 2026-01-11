@@ -13,14 +13,15 @@ import PlaylistDetails from "../pages/PlaylistDetails";
 import Dashboard from "../pages/Dashboard";
 import History from "../pages/History";
 import LikedVideos from "../pages/LikedVideos";
+import PublishVideo from "../pages/PublishVideo";
 
 const App = () => {
   return (
     <Routes>
       {/* PUBLIC ROUTES */}
       {/* <Route element={<Layout />}> */}
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       {/* </Route> */}
 
       {/* PROTECTED ROUTES */}
@@ -34,6 +35,7 @@ const App = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/history" element={<History />} />
           <Route path="/liked-videos" element={<LikedVideos />} />
+          <Route path="/publish-video" element={<PublishVideo />} />
         </Route>
       </Route>
 

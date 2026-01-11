@@ -1,63 +1,175 @@
-import mongoose, {isValidObjectId} from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
 import { asyncHandler } from "../utils/asyncHandler.js"
 import { Video } from "../models/video.model.js"
 import { User } from "../models/user.model.js"
 import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
-import {uploadOnCloudinary, deleteOnCloudinary} from "../utils/cloudinary.js"
+import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponce } from "../utils/ApiResponce.js"
 
+// const getAllVideos = asyncHandler(async (req, res) => {
+//     let { pages = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
+
+//     // Convert to number safely
+//     pages = Math.max(Number(pages) || 1, 1);
+//     limit = Math.min(Math.max(Number(limit) || 10, 1), 50); 
+//     // limit max is 50 => protects server load
+
+//     const filter = {};
+
+//     // Validate search input
+//     if (query) {
+//         if (query.length > 50) {
+//             throw new ApiError(400, "Search query too long");
+//         }
+//         filter.title = { $regex: query, $options: "i" };
+//     }
+
+//     // Validate userId before filtering
+//     if (userId) {
+//         if (!isValidObjectId(userId)) {
+//             throw new ApiError(400, "Invalid userId format");
+//         }
+//         filter.owner = userId;
+//     }
+
+//     // Whitelist allowed sorting fields
+//     const allowedSort = ["createdAt", "views", "title"];
+//     if (!allowedSort.includes(sortBy)) {
+//         sortBy = "createdAt";
+//     }
+
+//     const sortOrder = sortType === "asc" ? 1 : -1;
+
+//     // DB Query
+//     const videos = await Video.find(filter)
+//         .sort({ [sortBy]: sortOrder })
+//         .skip((pages - 1) * limit)
+//         .limit(limit);
+
+//     const totalVideos = await Video.countDocuments(filter);
+
+//     return res.status(200).json(
+//         new ApiResponse(200, {
+//             videos,
+//             totalVideos,
+//             currentPage: pages,
+//             limit,
+//             hasNextPage: pages * limit < totalVideos,
+//             totalPages: Math.ceil(totalVideos / limit),
+//         }, "Videos fetched successfully")
+//     );
+// });
+
 const getAllVideos = asyncHandler(async (req, res) => {
-    let { pages = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
+    let {
+        pages = 1,
+        limit = 10,
+        query,
+        sortBy = "createdAt",
+        sortType = "desc",
+        userId
+    } = req.query;
 
-    // Convert to number safely
+    // Sanitize pagination
     pages = Math.max(Number(pages) || 1, 1);
-    limit = Math.min(Math.max(Number(limit) || 10, 1), 50); 
-    // limit max is 50 => protects server load
+    limit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
-    const filter = {};
+    const skip = (pages - 1) * limit;
+    const sortOrder = sortType === "asc" ? 1 : -1;
 
-    // Validate search input
-    if (query) {
-        if (query.length > 50) {
-            throw new ApiError(400, "Search query too long");
-        }
-        filter.title = { $regex: query, $options: "i" };
-    }
-
-    // Validate userId before filtering
-    if (userId) {
-        if (!isValidObjectId(userId)) {
-            throw new ApiError(400, "Invalid userId format");
-        }
-        filter.owner = userId;
-    }
-
-    // Whitelist allowed sorting fields
+    // Whitelist sorting fields
     const allowedSort = ["createdAt", "views", "title"];
     if (!allowedSort.includes(sortBy)) {
         sortBy = "createdAt";
     }
 
-    const sortOrder = sortType === "asc" ? 1 : -1;
+    // Match filter
+    const matchStage = {};
 
-    // DB Query
-    const videos = await Video.find(filter)
-        .sort({ [sortBy]: sortOrder })
-        .skip((pages - 1) * limit)
-        .limit(limit);
+    if (query) {
+        if (query.length > 50) {
+            throw new ApiError(400, "Search query too long");
+        }
+        matchStage.title = { $regex: query, $options: "i" };
+    }
 
-    const totalVideos = await Video.countDocuments(filter);
+    if (userId) {
+        if (!isValidObjectId(userId)) {
+            throw new ApiError(400, "Invalid userId format");
+        }
+        matchStage.owner = new mongoose.Types.ObjectId(userId);
+    }
+
+    // Aggregation
+    const result = await Video.aggregate([
+        { $match: matchStage },
+
+        // Facet allows parallel pipelines
+        {
+            $facet: {
+                videos: [
+                    { $sort: { [sortBy]: sortOrder } },
+                    { $skip: skip },
+                    { $limit: limit },
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "owner",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        username: 1,
+                                        avatar: 1,
+                                        fullName: 1,
+                                        _id: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $addFields: {
+                            owner: { $first: "$owner" }
+                        }
+                    }
+                ],
+                totalVideos: [
+                    { $count: "count" }
+                ]
+            }
+        },
+
+
+        // Reshape output
+        {
+            $addFields: {
+                totalVideos: {
+                    $ifNull: [{ $arrayElemAt: ["$totalVideos.count", 0] }, 0]
+                }
+            }
+        },
+
+    ]);
+
+    const videos = result[0].videos;
+    const totalVideos = result[0].totalVideos;
 
     return res.status(200).json(
-        new ApiResponse(200, {
-            videos,
-            totalVideos,
-            currentPage: pages,
-            limit,
-            hasNextPage: pages * limit < totalVideos,
-            totalPages: Math.ceil(totalVideos / limit),
-        }, "Videos fetched successfully")
+        new ApiResponse(
+            200,
+            {
+                videos,
+                totalVideos,
+                currentPage: pages,
+                limit,
+                hasNextPage: pages * limit < totalVideos,
+                totalPages: Math.ceil(totalVideos / limit)
+            },
+            "Videos fetched successfully"
+        )
     );
 });
 
@@ -114,7 +226,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
-    
+
     const video = await Video.aggregate(
         [
             {
@@ -148,9 +260,9 @@ const getVideoById = asyncHandler(async (req, res) => {
                     },
                     isLiked: {
                         $cond: {
-                        if: { $in: [req.user?._id, "$likes.likedBy"] },
-                        then: true,
-                        else: false
+                            if: { $in: [req.user?._id, "$likes.likedBy"] },
+                            then: true,
+                            else: false
                         }
                     }
                 }
@@ -196,7 +308,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     if (video.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to update this video");
     }
-    
+
     const { title, description } = req.body;
 
     if (title) video.title = title;
@@ -211,7 +323,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
 
-    if(!isValidObjectId(videoId)) {
+    if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
 
@@ -233,7 +345,7 @@ const deleteVideo = asyncHandler(async (req, res) => {
     const videoDeletionResult = await deleteOnCloudinary(videoURL);
     const thumbnailDeletionResult = await deleteOnCloudinary(thumbnailURL);
 
-    return res.status(200).json(new ApiResponse(200, {videoDeletionResult, thumbnailDeletionResult}, "Video deleted successfully"));
+    return res.status(200).json(new ApiResponse(200, { videoDeletionResult, thumbnailDeletionResult }, "Video deleted successfully"));
 
 })
 
