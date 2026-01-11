@@ -14,9 +14,13 @@ export const useVideoComments = (videoId) => {
     queryKey: ["comments", videoId],
     queryFn: () => getCommentsByVideo(videoId),
     enabled: !!videoId,
-    select: (res) => res.data.data,
+    select: (res) => {
+      if (Array.isArray(res.data.data)) return res.data.data;
+      return [];
+    },
   });
 };
+
 
 /* =========================
    ADD COMMENT

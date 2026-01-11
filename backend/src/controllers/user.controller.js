@@ -88,11 +88,22 @@ const registerUser = asyncHandler( async (req, res) => {
         "-password -refreshToken"
     )
 
+    const {accessToken, refreshToken} = await generateAccessAndRefereshTokens(user._id)
+
+    const options = {
+        httpOnly: true,
+        secure: true
+    }
+
     if (!createdUser) {
         throw new ApiError(500, "Something went wrong while registering the user")
     }
 
-    return res.status(201).json(
+    return res
+    .status(201)
+    .cookie("accessToken", accessToken, options)
+    .cookie("refreshToken", refreshToken, options)
+    .json(
         new ApiResponse(200, createdUser, "User registered Successfully")
     )
 
@@ -399,6 +410,14 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
             }
         },
         {
+            $lookup: {
+                from: "videos",
+                localField: "_id",
+                foreignField: "owner",
+                as: "videos"
+            }
+        },
+        {
             $addFields: {
                 subscribersCount: {
                     $size: "$subscribers"
@@ -424,8 +443,12 @@ const getUserChannelProfile = asyncHandler(async(req, res) => {
                 isSubscribed: 1,
                 avatar: 1,
                 coverImage: 1,
-                email: 1
-
+                email: 1,
+                "videos._id": 1,
+                "videos.videoFile": 1,
+                "videos.thumbnail": 1,
+                "videos.title": 1,
+                "videos.duration": 1
             }
         }
     ])

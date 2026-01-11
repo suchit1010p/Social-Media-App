@@ -4,10 +4,11 @@ import { addComment, deleteComment, getCommentsByVideo, updateComment } from '..
 
 const router = Router();
 
-router.get('/:videoId', getCommentsByVideo);
+
 
 router.use(verifyJWT);
 
+router.get('/:videoId', getCommentsByVideo);
 router.post('/:videoId', addComment);
 router.patch('/:commentId', updateComment);
 router.delete('/:commentId', deleteComment);

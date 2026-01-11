@@ -1,4 +1,4 @@
-import { isValidObjectId } from "mongoose";
+import mongoose , { isValidObjectId } from "mongoose";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
@@ -34,6 +34,17 @@ const addComment = asyncHandler(async (req, res) => {
     res.status(201).json(new ApiResponse(true, "Comment added successfully", newComment));
 });
 
+// const getCommentsByVideo = asyncHandler(async (req, res) => {
+//     const { videoId } = req.params;
+
+//     if (!isValidObjectId(videoId)) {
+//         throw new ApiError(400, "Invalid video ID");
+//     }
+
+//     const comments = await Comment.find({ video: videoId }).populate("owner", "username fullName").sort({ createdAt: -1 });
+//     res.status(200).json(new ApiResponse(true, "Comments fetched successfully", comments));
+// });
+
 const getCommentsByVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params;
 
@@ -41,8 +52,54 @@ const getCommentsByVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video ID");
     }
 
-    const comments = await Comment.find({ video: videoId }).populate("owner", "username fullName").sort({ createdAt: -1 });
-    res.status(200).json(new ApiResponse(true, "Comments fetched successfully", comments));
+    // const comments = await Comment.find({ video: videoId }).populate("owner", "username fullName").sort({ createdAt: -1 });
+
+    const comments = await Comment.aggregate([
+        { $match: { video: new mongoose.Types.ObjectId(videoId) } },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "comment",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                isLiked: {
+                    $cond: {
+                    if: { $in: [req.user?._id, "$likes.likedBy"] },
+                    then: true,
+                    else: false
+                    }
+                }
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner"
+            }
+        },
+        { $unwind: "$owner" },
+        { $sort: { createdAt: -1 } },
+        {
+            $project: {
+                "owner.username": 1,
+                "owner.fullName": 1,
+                "owner._id": 1,
+                content: 1,
+                video: 1,
+                likesCount: 1,
+                isLiked: 1,
+            }
+        }
+        ]);
+
+    res.status(200).json(new ApiResponse(true, comments, "Comments fetched successfully"));
 });
 
 const updateComment = asyncHandler(async (req, res) => {

@@ -27,7 +27,7 @@ export const useVideoById = (videoId) => {
     queryKey: ["video", videoId],
     queryFn: () => getVideoById(videoId),
     enabled: !!videoId,
-    select: (res) => res.data.data,
+    select: (res) => res.data.data[0],
   });
 };
 

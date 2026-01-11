@@ -114,8 +114,65 @@ const getVideoById = asyncHandler(async (req, res) => {
     if (!isValidObjectId(videoId)) {
         throw new ApiError(400, "Invalid video ID");
     }
+    
+    const video = await Video.aggregate(
+        [
+            {
+                $match: {
+                    _id: new mongoose.Types.ObjectId(videoId)
+                }
+            },
+            {
+                $lookup: {
+                    from: "likes",
+                    localField: "_id",
+                    foreignField: "video",
+                    as: "likes"
+                }
+            },
+            {
+                $lookup: {
+                    from: "users",
+                    localField: "owner",
+                    foreignField: "_id",
+                    as: "owner"
+                }
+            },
+            {
+                $unwind: "$owner"
+            },
+            {
+                $addFields: {
+                    totalLikes: {
+                        $size: "$likes"
+                    },
+                    isLiked: {
+                        $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                        }
+                    }
+                }
+            },
+            {
+                $project: {
+                    __v: 0,
+                    createdAt: 0,
+                    updatedAt: 0,
+                    "owner.email": 0,
+                    "owner.watchHistory": 0,
+                    "owner.fullName": 0,
+                    "owner.password": 0,
+                    "owner.createdAt": 0,
+                    "owner.updatedAt": 0,
+                    "owner.__v": 0,
+                }
+            }
+        ]
+    );
 
-    const video = await Video.findById(videoId).populate("owner", "username avatar coverImage ");
+
     if (!video) {
         throw new ApiError(404, "Video not found");
     }

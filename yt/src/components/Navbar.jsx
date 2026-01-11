@@ -9,7 +9,7 @@ const Navbar = () => {
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
       onSuccess: () => {
-        navigate("/login");
+        navigate("/login", { replace: true });
       },
     });
   };
@@ -23,8 +23,12 @@ const Navbar = () => {
       </div>
 
       <div className="navbar-right">
-        <button className="logout-btn" onClick={handleLogout}>
-          Logout
+        <button
+          className="logout-btn"
+          onClick={handleLogout}
+          disabled={logoutMutation.isLoading}
+        >
+          {logoutMutation.isLoading ? "Logging out..." : "Logout"}
         </button>
       </div>
     </nav>
@@ -32,3 +36,4 @@ const Navbar = () => {
 };
 
 export default Navbar;
+
