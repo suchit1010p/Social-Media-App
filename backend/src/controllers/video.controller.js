@@ -71,20 +71,17 @@ const getAllVideos = asyncHandler(async (req, res) => {
         userId
     } = req.query;
 
-    // Sanitize pagination
     pages = Math.max(Number(pages) || 1, 1);
     limit = Math.min(Math.max(Number(limit) || 10, 1), 50);
 
     const skip = (pages - 1) * limit;
     const sortOrder = sortType === "asc" ? 1 : -1;
 
-    // Whitelist sorting fields
     const allowedSort = ["createdAt", "views", "title"];
     if (!allowedSort.includes(sortBy)) {
         sortBy = "createdAt";
     }
 
-    // Match filter
     const matchStage = {};
 
     if (query) {
@@ -101,11 +98,9 @@ const getAllVideos = asyncHandler(async (req, res) => {
         matchStage.owner = new mongoose.Types.ObjectId(userId);
     }
 
-    // Aggregation
     const result = await Video.aggregate([
         { $match: matchStage },
 
-        // Facet allows parallel pipelines
         {
             $facet: {
                 videos: [
@@ -142,8 +137,6 @@ const getAllVideos = asyncHandler(async (req, res) => {
             }
         },
 
-
-        // Reshape output
         {
             $addFields: {
                 totalVideos: {
