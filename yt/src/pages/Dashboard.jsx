@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useState } from "react";
 import { useChannelStats } from "../features/dashboard/dashboard.hooks";
 import { useDeleteVideo } from "../features/video/video.hooks";
 import { useUpdateAvatar, useUpdateCoverImage } from "../features/auth/auth.hooks";
 import { useNavigate } from "react-router-dom";
+import EditProfileModal from "../components/EditProfileModal";
+import { FaEdit } from "react-icons/fa";
 import "./styles/dashboard.css"; // Ensure this path is correct based on where this file is
 
 const Dashboard = () => {
@@ -11,6 +13,8 @@ const Dashboard = () => {
   const updateAvatarMutation = useUpdateAvatar();
   const updateCoverMutation = useUpdateCoverImage();
   const navigate = useNavigate();
+
+  const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
 
   const handleFileChange = (e, type) => {
     const file = e.target.files[0];
@@ -93,10 +97,26 @@ const Dashboard = () => {
           </div>
 
           <div className="user-details">
-            <h2>{stats?.fullName}</h2>
+            <div className="user-header-row">
+              <h2>{stats?.fullName}</h2>
+              <button
+                className="edit-profile-icon-btn"
+                onClick={() => setIsEditProfileOpen(true)}
+                title="Edit Profile"
+              >
+                <FaEdit />
+              </button>
+            </div>
             <p>@{stats?.username}</p>
           </div>
         </div>
+
+        {/* Edit Profile Modal */}
+        <EditProfileModal
+          isOpen={isEditProfileOpen}
+          onClose={() => setIsEditProfileOpen(false)}
+          user={stats}
+        />
       </div>
 
       {/* STATS CARDS */}

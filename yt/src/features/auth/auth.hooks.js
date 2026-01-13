@@ -90,6 +90,9 @@ export const useUpdateAccount = () => {
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
       });
+      queryClient.invalidateQueries({
+        queryKey: ["dashboard", "channelStats"],
+      });
     },
   });
 };
@@ -98,8 +101,16 @@ export const useUpdateAccount = () => {
    CHANGE PASSWORD
 ========================= */
 export const useChangePassword = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: changePassword,
+    onSuccess: () => {
+      // refetch current user after change password
+      queryClient.invalidateQueries({
+        queryKey: ["auth", "currentUser"],
+      });
+    },
   });
 };
 

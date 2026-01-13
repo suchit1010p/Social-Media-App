@@ -26,7 +26,7 @@ export const updateAccount = (data) =>
 
 // change password
 export const changePassword = (data) =>
-  api.patch("/users/change-password", data);
+  api.post("/users/change-password", data);
 
 // avatar
 export const updateAvatar = (formData) =>

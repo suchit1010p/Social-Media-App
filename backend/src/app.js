@@ -6,7 +6,7 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: [process.env.CORS_ORIGIN, "https://applaudable-katie-minutely.ngrok-free.dev"],
+    origin: process.env.CORS_ORIGIN,
     credentials: true
 }))
 
