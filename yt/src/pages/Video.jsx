@@ -109,7 +109,7 @@ const Video = () => {
         {/* DESCRIPTION BOX */}
         <div className="description-box">
           <div className="description-stats">
-            <span>{video.views?.toLocaleString()} views</span>
+            <span>{video.totalViews?.toLocaleString()} views</span>
             <span> • {new Date(video.createdAt).toLocaleDateString()}</span>
           </div>
           <p className={`description-text ${isDescriptionExpanded ? "expanded" : ""}`}>

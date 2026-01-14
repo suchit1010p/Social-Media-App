@@ -6,6 +6,7 @@ import { ApiError } from "../utils/ApiError.js"
 import { ApiResponse } from "../utils/ApiResponse.js"
 import { uploadOnCloudinary, deleteOnCloudinary } from "../utils/cloudinary.js"
 import { ApiResponce } from "../utils/ApiResponce.js"
+import { History } from "../models/history.model.js";
 
 // const getAllVideos = asyncHandler(async (req, res) => {
 //     let { pages = 1, limit = 10, query, sortBy = "createdAt", sortType = "desc", userId } = req.query;
@@ -247,6 +248,14 @@ const getVideoById = asyncHandler(async (req, res) => {
                 $unwind: "$owner"
             },
             {
+                $lookup: {
+                    from: "histories",
+                    localField: "_id",
+                    foreignField: "video",
+                    as: "history"
+                }
+            },
+            {
                 $addFields: {
                     totalLikes: {
                         $size: "$likes"
@@ -257,14 +266,15 @@ const getVideoById = asyncHandler(async (req, res) => {
                             then: true,
                             else: false
                         }
+                    },
+                    totalViews: {
+                        $size: "$history"
                     }
                 }
             },
             {
                 $project: {
                     __v: 0,
-                    createdAt: 0,
-                    updatedAt: 0,
                     "owner.email": 0,
                     "owner.watchHistory": 0,
                     "owner.fullName": 0,
@@ -272,14 +282,33 @@ const getVideoById = asyncHandler(async (req, res) => {
                     "owner.createdAt": 0,
                     "owner.updatedAt": 0,
                     "owner.__v": 0,
+                    likes: 0,
+                    history: 0
                 }
             }
         ]
     );
-
-
-    if (!video) {
+    
+    if (!video || video.length === 0) {
         throw new ApiError(404, "Video not found");
+    }
+
+    // adding user and video in history collection if user is not in history
+    if (req.user) {
+        const existingHistory = await History.aggregate([
+            {
+                $match: {
+                    video: new mongoose.Types.ObjectId(videoId),
+                    user: new mongoose.Types.ObjectId(req.user._id)
+                }
+            }
+        ]);
+        if (existingHistory.length === 0) {
+            await History.create({
+                video: videoId,
+                user: req.user._id
+            });
+        }
     }
 
     return res.status(200).json(new ApiResponse(200, video));
