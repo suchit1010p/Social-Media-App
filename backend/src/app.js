@@ -6,10 +6,21 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
-}))
+  origin: process.env.CORS_ORIGIN,
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept"
+  ],
+}));
 
+app.options("*", cors({
+  origin: process.env.CORS_ORIGIN,
+  credentials: true,
+}));
 
 // cors : a mechanism that allows web application to access resources from different domains. 
 
