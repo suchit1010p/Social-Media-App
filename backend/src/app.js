@@ -6,9 +6,9 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-  origin: process.env.CORS_ORIGIN,
+  origin: process.env.CORS_ORIGIN || "http://localhost:5173",
   credentials: true,
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
   allowedHeaders: [
     "Content-Type",
     "Authorization",
@@ -17,10 +17,23 @@ app.use(cors({
   ],
 }));
 
-app.options("*", cors({
-  origin: process.env.CORS_ORIGIN,
-  credentials: true,
-}));
+// ✅ Preflight fix for modern Express
+app.use((req, res, next) => {
+  if (req.method === "OPTIONS") {
+    res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN);
+    res.header("Access-Control-Allow-Credentials", "true");
+    res.header(
+      "Access-Control-Allow-Methods",
+      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
+    );
+    res.header(
+      "Access-Control-Allow-Headers",
+      "Content-Type, Authorization, X-Requested-With, Accept"
+    );
+    return res.sendStatus(200);
+  }
+  next();
+});
 
 // cors : a mechanism that allows web application to access resources from different domains. 
 
