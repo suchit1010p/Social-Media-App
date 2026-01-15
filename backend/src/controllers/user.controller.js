@@ -94,7 +94,8 @@ const registerUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite: "none"
+        sameSite: "none",
+        domain: ".hospify.me",
     }
 
     if (!createdUser) {
@@ -160,7 +161,8 @@ const loginUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite: "none"
+        sameSite: "none",
+        domain: ".hospify.me",
     }
 
     return res
@@ -195,7 +197,8 @@ const logoutUser = asyncHandler(async (req, res) => {
     const options = {
         httpOnly: true,
         secure: true,
-        sameSite: "none"
+        sameSite: "none",
+        domain: ".hospify.me",
     }
 
     return res
@@ -232,7 +235,8 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
         const options = {
             httpOnly: true,
             secure: true,
-            sameSite: "none"
+            sameSite: "none",
+            domain: ".hospify.me",
         }
 
         const { accessToken, newRefreshToken } = await generateAccessAndRefereshTokens(user._id)
