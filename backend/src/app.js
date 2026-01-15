@@ -2,55 +2,13 @@ import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
 
-
 const app = express()
 
-const allowedOrigins = [
-  "https://hospify.me",
-  "https://www.hospify.me",
-  "https://vidplay-eta.vercel.app", // optional (can remove later)
-];
+app.use(cors({
+    origin: process.env.CORS_ORIGIN,
+    credentials: true
+}))
 
-app.use(
-  cors({
-    origin: function (origin, callback) {
-      // allow requests with no origin (Postman, mobile apps)
-      if (!origin) return callback(null, true);
-
-      if (allowedOrigins.includes(origin)) {
-        return callback(null, true);
-      }
-
-      return callback(new Error("Not allowed by CORS"));
-    },
-    credentials: true,
-    methods: ["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "X-Requested-With",
-      "Accept",
-    ],
-  })
-);
-
-// ✅ Preflight fix for modern Express
-app.use((req, res, next) => {
-  if (req.method === "OPTIONS") {
-    res.header("Access-Control-Allow-Origin", process.env.CORS_ORIGIN);
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header(
-      "Access-Control-Allow-Methods",
-      "GET,POST,PUT,PATCH,DELETE,OPTIONS"
-    );
-    res.header(
-      "Access-Control-Allow-Headers",
-      "Content-Type, Authorization, X-Requested-With, Accept"
-    );
-    return res.sendStatus(200);
-  }
-  next();
-});
 
 // cors : a mechanism that allows web application to access resources from different domains. 
 
