@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: ['https://vidplay-eta.vercel.app', 'https://www.hospify.me', 'https://hospify.me'],
+    origin: ['https://vidplay-eta.vercel.app', 'https://www.hospify.me', 'https://hospify.me', 'http://localhost:5173', 'http://localhost:3000'],
     credentials: true
 }))
 
@@ -14,9 +14,9 @@ app.use(cors({
 
 
 // limiting the request so that surver can hold the load 
-app.use(express.json({limit:"16kb"}))
+app.use(express.json({ limit: "16kb" }))
 // exncode url data and put it in object form  
-app.use(express.urlencoded({extended: true, limit: "16kb"}))
+app.use(express.urlencoded({ extended: true, limit: "16kb" }))
 // stors static files in public
 app.use(express.static("public"))
 
@@ -47,4 +47,4 @@ app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
 app.use("/api/v1/playlists", playlistRouter)
 
-export {app}
+export { app }

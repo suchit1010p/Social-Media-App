@@ -32,6 +32,9 @@ export const useCurrentUser = (options = {}) => {
 export const useRegister = () => {
   return useMutation({
     mutationFn: registerUser,
+    onSuccess: () => {
+      localStorage.setItem("auth_status", "loggedin");
+    },
   });
 };
 
@@ -44,6 +47,7 @@ export const useLogin = () => {
   return useMutation({
     mutationFn: loginUser,
     onSuccess: () => {
+      localStorage.setItem("auth_status", "loggedin");
       // refetch current user after login
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
@@ -61,6 +65,7 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
+      localStorage.removeItem("auth_status");
       // clear auth cache on logout
       queryClient.removeQueries({
         queryKey: ["auth", "currentUser"],
