@@ -18,7 +18,6 @@ const Login = () => {
   // If already logged in → redirect
   useEffect(() => {
     if (user) {
-      localStorage.setItem("auth_status", "loggedin");
       navigate("/");
     }
   }, [user, navigate]);

@@ -4,13 +4,6 @@ import { useCurrentUser } from "../features/auth/auth.hooks";
 const ProtectedRoute = () => {
   const { data: user, isLoading, isError } = useCurrentUser();
   const location = useLocation();
-  const probableAuth = localStorage.getItem("auth_status");
-
-  // If not logged in (checks localStorage first as a hint)
-  if (!probableAuth) {
-    return <Navigate to="/login" replace state={{ from: location.pathname }} />;
-  }
-
 
   // While checking auth status
   if (isLoading) {
