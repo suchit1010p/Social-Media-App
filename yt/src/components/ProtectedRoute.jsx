@@ -1,23 +1,18 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useCurrentUser } from "../features/auth/auth.hooks";
+import { getLocalUser } from "../utils/auth.utils";
 
 const ProtectedRoute = () => {
-  const { data: user, isLoading, isError } = useCurrentUser();
+  const user = getLocalUser();
   const location = useLocation();
 
-  // While checking auth status
-  if (isLoading) {
-    return <div>Checking authentication...</div>;
-  }
-
-  // If not logged in OR token invalid
-  if (isError || !user) {
+  // If no local token, redirect immediately
+  if (!user) {
     return (
       <Navigate to="/login" replace state={{ from: location.pathname }} />
     );
   }
 
-  // User is authenticated
+  // Allow rendering immediately
   return <Outlet />;
 };
 
