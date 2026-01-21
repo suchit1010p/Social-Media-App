@@ -32,6 +32,14 @@ export const useCurrentUser = (options = {}) => {
 export const useRegister = () => {
   return useMutation({
     mutationFn: registerUser,
+    onSuccess: (data) => {
+      // refetch current user after register
+      localStorage.setItem("user", JSON.stringify(data.data.data.user));
+    },
+    onError: (error) => {
+      // clear auth cache on error
+      localStorage.removeItem("user");
+    },
   });
 };
 
