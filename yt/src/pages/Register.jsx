@@ -54,7 +54,7 @@ const Register = () => {
 
     registerMutation.mutate(formData, {
       onSuccess: () => {
-        navigate("/login");
+        navigate("/");
       },
     });
   };

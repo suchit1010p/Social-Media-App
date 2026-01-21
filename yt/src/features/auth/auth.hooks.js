@@ -34,7 +34,8 @@ export const useRegister = () => {
     mutationFn: registerUser,
     onSuccess: (data) => {
       // refetch current user after register
-      localStorage.setItem("user", JSON.stringify(data.data.data.user));
+      // Register response data IS the user object, not { user: ... }
+      localStorage.setItem("user", JSON.stringify(data.data.data));
     },
     onError: (error) => {
       // clear auth cache on error
