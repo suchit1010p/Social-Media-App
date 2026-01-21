@@ -43,8 +43,9 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: loginUser,
-    onSuccess: () => {
+    onSuccess: (data) => {
       // refetch current user after login
+      localStorage.setItem("user", JSON.stringify(data.data.data.user));
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
       });
@@ -62,6 +63,7 @@ export const useLogout = () => {
     mutationFn: logoutUser,
     onSuccess: () => {
       // clear auth cache on logout
+      localStorage.removeItem("user");
       queryClient.removeQueries({
         queryKey: ["auth", "currentUser"],
       });
