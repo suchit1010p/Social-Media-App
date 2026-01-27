@@ -55,6 +55,7 @@ export const useLogin = () => {
     onSuccess: (data) => {
       // refetch current user after login
       localStorage.setItem("user", JSON.stringify(data.data.data.user));
+      localStorage.setItem("accessToken", data.data.data.accessToken);
       queryClient.invalidateQueries({
         queryKey: ["auth", "currentUser"],
       });
@@ -73,6 +74,7 @@ export const useLogout = () => {
     onSuccess: () => {
       // clear auth cache on logout
       localStorage.removeItem("user");
+      localStorage.removeItem("accessToken");
       queryClient.removeQueries({
         queryKey: ["auth", "currentUser"],
       });

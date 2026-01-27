@@ -5,7 +5,7 @@ import cookieParser from "cookie-parser"
 const app = express()
 
 app.use(cors({
-    origin: ['https://vidplay-eta.vercel.app', 'https://www.hospify.me', 'https://hospify.me'],
+    origin: ['https://vidplay-eta.vercel.app', 'https://www.hospify.me', 'https://hospify.me', 'http://localhost:8000', 'http://localhost:3000', 'http://localhost:5173'],
     credentials: true
 }))
 
