@@ -3,7 +3,6 @@ import {
   registerUser,
   loginUser,
   logoutUser,
-  refreshToken,
   getCurrentUser,
   updateAccount,
   changePassword,
@@ -12,15 +11,31 @@ import {
   getChannelProfile,
   getWatchHistory,
 } from "../../api/auth.api";
+import { authStorage } from "../../utils/authStorage";
+
+// Query Keys - Centralized for consistency
+export const authKeys = {
+  currentUser: ["auth", "currentUser"],
+  channel: (username) => ["auth", "channel", username],
+  watchHistory: ["auth", "watchHistory"],
+};
 
 /* =========================
    GET CURRENT USER
 ========================= */
 export const useCurrentUser = (options = {}) => {
   return useQuery({
-    queryKey: ["auth", "currentUser"],
+    queryKey: authKeys.currentUser,
     queryFn: getCurrentUser,
-    retry: false, // important for auth
+    retry: (failureCount, error) => {
+      // Don't retry on auth errors (401, 403)
+      if (error?.response?.status === 401 || error?.response?.status === 403) {
+        return false;
+      }
+      // Retry on network errors up to 2 times
+      return failureCount < 2;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes - reduce unnecessary refetches
     select: (res) => res.data.data,
     ...options,
   });
@@ -30,16 +45,28 @@ export const useCurrentUser = (options = {}) => {
    REGISTER
 ========================= */
 export const useRegister = () => {
+  const queryClient = useQueryClient();
+
   return useMutation({
     mutationFn: registerUser,
-    onSuccess: (data) => {
-      // refetch current user after register
-      // Register response data IS the user object, not { user: ... }
-      localStorage.setItem("user", JSON.stringify(data.data.data));
+    onSuccess: (response) => {
+      // Normalize response data structure
+      const userData = response.data.data;
+      const accessToken = userData.accessToken || response.data.data.accessToken;
+
+      // Update storage
+      authStorage.setUser(userData.user || userData);
+      if (accessToken) {
+        authStorage.setAccessToken(accessToken);
+      }
+
+      // Update query cache
+      queryClient.setQueryData(authKeys.currentUser, response);
     },
     onError: (error) => {
-      // clear auth cache on error
-      localStorage.removeItem("user");
+      console.error("Registration failed:", error);
+      authStorage.clearAuth();
+      queryClient.setQueryData(authKeys.currentUser, null);
     },
   });
 };
@@ -52,13 +79,21 @@ export const useLogin = () => {
 
   return useMutation({
     mutationFn: loginUser,
-    onSuccess: (data) => {
-      // refetch current user after login
-      localStorage.setItem("user", JSON.stringify(data.data.data.user));
-      localStorage.setItem("accessToken", data.data.data.accessToken);
-      queryClient.invalidateQueries({
-        queryKey: ["auth", "currentUser"],
+    onSuccess: (response) => {
+      const { user, accessToken, refreshToken } = response.data.data;
+
+      // Update storage
+      authStorage.setUser(user);
+      authStorage.setAccessToken(accessToken);
+
+      // Update query cache with full response for select to work
+      queryClient.setQueryData(authKeys.currentUser, {
+        data: { data: user }
       });
+    },
+    onError: (error) => {
+      console.error("Login failed:", error);
+      authStorage.clearAuth();
     },
   });
 };
@@ -72,22 +107,22 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: logoutUser,
     onSuccess: () => {
-      // clear auth cache on logout
-      localStorage.removeItem("user");
-      localStorage.removeItem("accessToken");
-      queryClient.removeQueries({
-        queryKey: ["auth", "currentUser"],
-      });
-    },
-  });
-};
+      // Clear storage
+      authStorage.clearAuth();
 
-/* =========================
-   REFRESH TOKEN
-========================= */
-export const useRefreshToken = () => {
-  return useMutation({
-    mutationFn: refreshToken,
+      // Clear specific auth queries, not all queries
+      queryClient.setQueryData(authKeys.currentUser, null);
+      queryClient.invalidateQueries({ queryKey: ["auth"] });
+
+      // Optionally clear all queries if needed for fresh start
+      // queryClient.clear();
+    },
+    onError: (error) => {
+      // Even if logout fails on server, clear local state
+      console.error("Logout failed on server, clearing local state:", error);
+      authStorage.clearAuth();
+      queryClient.setQueryData(authKeys.currentUser, null);
+    },
   });
 };
 
@@ -99,13 +134,39 @@ export const useUpdateAccount = () => {
 
   return useMutation({
     mutationFn: updateAccount,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["auth", "currentUser"],
-      });
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard", "channelStats"],
-      });
+    onMutate: async (newData) => {
+      // Cancel outgoing refetches
+      await queryClient.cancelQueries({ queryKey: authKeys.currentUser });
+
+      // Snapshot previous value
+      const previousUser = queryClient.getQueryData(authKeys.currentUser);
+
+      // Optimistically update
+      if (previousUser) {
+        queryClient.setQueryData(authKeys.currentUser, (old) => ({
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              ...newData
+            }
+          }
+        }));
+      }
+
+      return { previousUser };
+    },
+    onError: (err, newData, context) => {
+      // Rollback on error
+      if (context?.previousUser) {
+        queryClient.setQueryData(authKeys.currentUser, context.previousUser);
+      }
+    },
+    onSettled: () => {
+      // Refetch to ensure sync
+      queryClient.invalidateQueries({ queryKey: authKeys.currentUser });
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "channelStats"] });
     },
   });
 };
@@ -114,16 +175,10 @@ export const useUpdateAccount = () => {
    CHANGE PASSWORD
 ========================= */
 export const useChangePassword = () => {
-  const queryClient = useQueryClient();
-
   return useMutation({
     mutationFn: changePassword,
-    onSuccess: () => {
-      // refetch current user after change password
-      queryClient.invalidateQueries({
-        queryKey: ["auth", "currentUser"],
-      });
-    },
+    // No need to invalidate queries for password change
+    // User data doesn't change
   });
 };
 
@@ -135,13 +190,26 @@ export const useUpdateAvatar = () => {
 
   return useMutation({
     mutationFn: updateAvatar,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["auth", "currentUser"],
+    onSuccess: (response) => {
+      const newAvatar = response.data.data.avatar;
+
+      // Optimistically update current user query
+      queryClient.setQueryData(authKeys.currentUser, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              avatar: newAvatar
+            }
+          }
+        };
       });
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard", "channelStats"],
-      });
+
+      // Update dashboard stats
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "channelStats"] });
     },
   });
 };
@@ -154,13 +222,26 @@ export const useUpdateCoverImage = () => {
 
   return useMutation({
     mutationFn: updateCoverImage,
-    onSuccess: () => {
-      queryClient.invalidateQueries({
-        queryKey: ["auth", "currentUser"],
+    onSuccess: (response) => {
+      const newCoverImage = response.data.data.coverImage;
+
+      // Optimistically update current user query
+      queryClient.setQueryData(authKeys.currentUser, (old) => {
+        if (!old) return old;
+        return {
+          ...old,
+          data: {
+            ...old.data,
+            data: {
+              ...old.data.data,
+              coverImage: newCoverImage
+            }
+          }
+        };
       });
-      queryClient.invalidateQueries({
-        queryKey: ["dashboard", "channelStats"],
-      });
+
+      // Update dashboard stats
+      queryClient.invalidateQueries({ queryKey: ["dashboard", "channelStats"] });
     },
   });
 };
@@ -170,9 +251,10 @@ export const useUpdateCoverImage = () => {
 ========================= */
 export const useChannelProfile = (username) => {
   return useQuery({
-    queryKey: ["auth", "channel", username],
+    queryKey: authKeys.channel(username),
     queryFn: () => getChannelProfile(username),
     enabled: !!username,
+    staleTime: 2 * 60 * 1000, // 2 minutes
     select: (res) => res.data.data,
   });
 };
@@ -182,8 +264,9 @@ export const useChannelProfile = (username) => {
 ========================= */
 export const useWatchHistory = () => {
   return useQuery({
-    queryKey: ["auth", "watchHistory"],
+    queryKey: authKeys.watchHistory,
     queryFn: getWatchHistory,
+    staleTime: 1 * 60 * 1000, // 1 minute
     select: (res) => res.data.data,
   });
 };
