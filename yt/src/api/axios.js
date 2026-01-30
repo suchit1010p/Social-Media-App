@@ -74,8 +74,7 @@ api.interceptors.response.use(
         processQueue(refreshError, null);
         authStorage.clearAuth();
 
-        // Redirect to login
-        window.location.href = '/login';
+        // Redirect to login handled by ProtectedRoute/app state
         return Promise.reject(refreshError);
       } finally {
         isRefreshing = false;
