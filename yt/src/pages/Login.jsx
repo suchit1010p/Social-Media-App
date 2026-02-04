@@ -1,26 +1,124 @@
+// import { useState, useEffect } from "react";
+// import { Link, useNavigate, useLocation } from "react-router-dom";
+// import { useLogin, useCurrentUser } from "../features/auth/auth.hooks";
+// import "./styles/auth.css";
+
+// const Login = () => {
+//   const navigate = useNavigate();
+//   const location = useLocation();
+
+//   const isLoggedOut = location.state?.loggedOut;
+
+//   const { data: user } = useCurrentUser({ enabled: !isLoggedOut });
+//   const loginMutation = useLogin();
+
+//   const [email, setEmail] = useState("");
+//   const [password, setPassword] = useState("");
+
+//   // If already logged in → redirect
+//   useEffect(() => {
+//     if (user) {
+//       navigate("/");
+//     }
+//   }, [user, navigate]);
+
+//   const handleSubmit = (e) => {
+//     e.preventDefault();
+
+//     loginMutation.mutate(
+//       { email, password },
+//       {
+//         onSuccess: () => {
+//           const redirectTo = location.state?.from || "/";
+//           navigate(redirectTo, { replace: true });
+//         },
+//       }
+//     );
+//   };
+
+//   return (
+//     <div className="auth-container">
+//       <form className="auth-card" onSubmit={handleSubmit}>
+//         <h2>Welcome Back</h2>
+//         <p className="auth-subtitle">Login to your VidPlay account</p>
+
+//         <div className="auth-field">
+//           <label>Email</label>
+//           <input
+//             type="email"
+//             placeholder="name@example.com"
+//             value={email}
+//             onChange={(e) => setEmail(e.target.value)}
+//             required
+//             autoComplete="email"
+//           />
+//         </div>
+
+//         <div className="auth-field">
+//           <label>Password</label>
+//           <input
+//             type="password"
+//             placeholder="••••••••"
+//             value={password}
+//             onChange={(e) => setPassword(e.target.value)}
+//             required
+//             autoComplete="current-password"
+//           />
+//         </div>
+
+//         {loginMutation.isError && (
+//           <div className="auth-error">
+//             {loginMutation.error?.response?.data?.message ||
+//               "Login failed. Please try again."}
+//           </div>
+//         )}
+
+//         <button
+//           type="submit"
+//           className="auth-btn"
+//           disabled={loginMutation.isLoading}
+//         >
+//           {loginMutation.isLoading ? "Logging in..." : "Sign In"}
+//         </button>
+
+//         <p className="auth-footer">
+//           Don’t have an account?{" "}
+//           <Link to="/register">Create account</Link>
+//         </p>
+//       </form>
+//     </div>
+//   );
+// };
+
+// export default Login;
+
+
+
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
-import { useLogin, useCurrentUser } from "../features/auth/auth.hooks";
+import { useLogin } from "../features/auth/auth.hooks";
+import { authStorage } from "../utils/authStorage";
 import "./styles/auth.css";
 
 const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
-
-  const isLoggedOut = location.state?.loggedOut;
-
-  const { data: user } = useCurrentUser({ enabled: !isLoggedOut });
   const loginMutation = useLogin();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // If already logged in → redirect
+  // Check if already logged in - instant, no API call
   useEffect(() => {
-    if (user) {
-      navigate("/");
+    const hasToken = authStorage.getAccessToken();
+    const user = authStorage.getUser();
+    
+    // If we have both token and user in storage, redirect immediately
+    if (hasToken && user) {
+      navigate("/", { replace: true });
     }
-  }, [user, navigate]);
+  }, [navigate]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -69,20 +167,20 @@ const Login = () => {
         {loginMutation.isError && (
           <div className="auth-error">
             {loginMutation.error?.response?.data?.message ||
-              "Login failed. Please try again."}
+              "Login failed. Please check your credentials."}
           </div>
         )}
 
         <button
           type="submit"
           className="auth-btn"
-          disabled={loginMutation.isLoading}
+          disabled={loginMutation.isPending}
         >
-          {loginMutation.isLoading ? "Logging in..." : "Sign In"}
+          {loginMutation.isPending ? "Logging in..." : "Sign In"}
         </button>
 
         <p className="auth-footer">
-          Don’t have an account?{" "}
+          Don't have an account?{" "}
           <Link to="/register">Create account</Link>
         </p>
       </form>
