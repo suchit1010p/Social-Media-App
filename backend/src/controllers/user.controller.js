@@ -6,6 +6,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import jwt from "jsonwebtoken"
 import mongoose from "mongoose";
 import { History } from "../models/history.model.js";
+import { clearUserCache } from "../middlewares/auth.middleware.js";
 
 
 const generateAccessAndRefereshTokens = async (userId) => {
@@ -41,7 +42,7 @@ const registerUser = asyncHandler(async (req, res) => {
     //console.log("email: ", email);
 
     if (
-        [fullName, email, username, password].some((field) => field?.trim() === "")
+        [fullName, email, username, password].some((field) => field?.trim() === "" || field === undefined || field === null)
     ) {
         throw new ApiError(400, "All fields are required")
     }
@@ -103,10 +104,13 @@ const registerUser = asyncHandler(async (req, res) => {
 
     return res
         .status(201)
-        .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
-            new ApiResponse(200, createdUser, "User registered Successfully")
+            new ApiResponse(200, {
+                user: createdUser,
+                accessToken,
+                refreshToken
+            }, "User registered Successfully")
         )
 
 })
@@ -119,7 +123,7 @@ const loginUser = asyncHandler(async (req, res) => {
     //access and referesh token
     //send cookie
 
-   if (!req.body || Object.keys(req.body).length === 0) {
+    if (!req.body || Object.keys(req.body).length === 0) {
         throw new ApiError(400, "Request body is empty");
     }
 
@@ -140,8 +144,8 @@ const loginUser = asyncHandler(async (req, res) => {
 
     // }
 
-    const user = await User.findOne({ 
-        email: email.toLowerCase().trim() 
+    const user = await User.findOne({
+        email: email.toLowerCase().trim()
     }).select("+password");
 
     if (!user) {
@@ -167,7 +171,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .cookie("accessToken", accessToken, options)
         .cookie("refreshToken", refreshToken, options)
         .json(
             new ApiResponse(
@@ -209,13 +212,15 @@ const logoutUser = asyncHandler(async (req, res) => {
 
     return res
         .status(200)
-        .clearCookie("accessToken", options)
         .clearCookie("refreshToken", options)
         .json(new ApiResponse(200, {}, "User logged out successfully"));
 });
 
 const refreshAccessToken = asyncHandler(async (req, res) => {
-    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken;
+
+    // Strict: Refresh token MUST be in cookie for security (HttpOnly)
+    // We disallow sending it in body to enforce secure flow
+    const incomingRefreshToken = req.cookies.refreshToken;
 
     if (!incomingRefreshToken) {
         throw new ApiError(401, "Unauthorized request");
@@ -248,12 +253,11 @@ const refreshAccessToken = asyncHandler(async (req, res) => {
 
         return res
             .status(200)
-            .cookie("accessToken", accessToken, options)
             .cookie("refreshToken", newRefreshToken, options)
             .json(
                 new ApiResponse(
                     200,
-                    { accessToken, refreshToken: newRefreshToken },
+                    { accessToken, refreshToken: newRefreshToken, user },
                     "Access token refreshed successfully"
                 )
             );

@@ -15,7 +15,12 @@ import History from "../pages/History";
 import LikedVideos from "../pages/LikedVideos";
 import PublishVideo from "../pages/PublishVideo";
 
+import { useRefreshSession } from "../features/auth/auth.hooks";
+
 const App = () => {
+  // Proactively check for session on app load
+  useRefreshSession();
+
   return (
     <Routes>
       {/* PUBLIC ROUTES */}

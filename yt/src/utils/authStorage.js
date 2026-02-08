@@ -1,9 +1,9 @@
 // authStorage.js
 const AUTH_STORAGE_KEYS = {
-    USER: 'user',
-    ACCESS_TOKEN: 'accessToken',
-    REFRESH_TOKEN: 'refreshToken'
+    USER: 'user'
 };
+
+let inMemoryAccessToken = null;
 
 export const authStorage = {
     getUser: () => {
@@ -25,27 +25,17 @@ export const authStorage = {
     },
 
     getAccessToken: () => {
-        try {
-            return localStorage.getItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-        } catch (error) {
-            console.error('Failed to get access token:', error);
-            return null;
-        }
+        return inMemoryAccessToken;
     },
 
     setAccessToken: (token) => {
-        try {
-            localStorage.setItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN, token);
-        } catch (error) {
-            console.error('Failed to save access token:', error);
-        }
+        inMemoryAccessToken = token;
     },
 
     clearAuth: () => {
         try {
             localStorage.removeItem(AUTH_STORAGE_KEYS.USER);
-            localStorage.removeItem(AUTH_STORAGE_KEYS.ACCESS_TOKEN);
-            localStorage.removeItem(AUTH_STORAGE_KEYS.REFRESH_TOKEN);
+            inMemoryAccessToken = null;
         } catch (error) {
             console.error('Failed to clear auth storage:', error);
         }

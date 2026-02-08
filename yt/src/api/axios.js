@@ -96,9 +96,6 @@ const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || "http://localhost:8000/api/v1",
   withCredentials: true,
   timeout: 15000, // 15 second timeout to prevent hanging requests
-  headers: {
-    'Content-Type': 'application/json',
-  }
 });
 
 let isRefreshing = false;

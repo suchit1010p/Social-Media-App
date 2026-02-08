@@ -10,7 +10,7 @@ const Navbar = () => {
 
   const handleLogout = () => {
     logoutMutation.mutate(undefined, {
-      onSuccess: () => {
+      onSettled: () => {
         navigate("/login", { replace: true, state: { loggedOut: true } });
       },
     });

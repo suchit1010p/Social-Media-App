@@ -286,6 +286,7 @@ import {
   updateCoverImage,
   getChannelProfile,
   getWatchHistory,
+  refreshToken,
 } from "../../api/auth.api";
 import { authStorage } from "../../utils/authStorage";
 
@@ -389,7 +390,7 @@ export const useLogout = () => {
       // Clear queries
       queryClient.setQueryData(authKeys.currentUser, null);
       queryClient.removeQueries({ queryKey: ["auth"] });
-      
+
       // Clear other user-specific data
       queryClient.removeQueries({ queryKey: ["videos"] });
       queryClient.removeQueries({ queryKey: ["playlists"] });
@@ -433,9 +434,9 @@ export const useUpdateAccount = () => {
             }
           }
         };
-        
+
         queryClient.setQueryData(authKeys.currentUser, updatedUser);
-        
+
         // Update localStorage too
         authStorage.setUser({
           ...previousUser.data.data,
@@ -494,7 +495,7 @@ export const useUpdateAvatar = () => {
             }
           }
         };
-        
+
         // Update localStorage
         authStorage.setUser(updated.data.data);
         return updated;
@@ -530,7 +531,7 @@ export const useUpdateCoverImage = () => {
             }
           }
         };
-        
+
         // Update localStorage
         authStorage.setUser(updated.data.data);
         return updated;
@@ -558,11 +559,47 @@ export const useChannelProfile = (username) => {
 /* =========================
    WATCH HISTORY
 ========================= */
+export const useRefreshSession = () => {
+  const queryClient = useQueryClient();
+
+  return useQuery({
+    queryKey: ["auth", "refreshSession"],
+    queryFn: async () => {
+      try {
+        const response = await refreshToken();
+        const { user, accessToken } = response.data.data;
+
+        // Update storage
+        authStorage.setUser(user);
+        authStorage.setAccessToken(accessToken);
+
+        // Update query cache
+        queryClient.setQueryData(authKeys.currentUser, {
+          data: { data: user }
+        });
+
+        return user;
+      } catch (error) {
+        // If refresh fails (e.g. no cookie), that's fine, just clear auth
+        authStorage.clearAuth();
+        queryClient.setQueryData(authKeys.currentUser, null);
+        return null;
+      }
+    },
+    retry: false,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true, // Run on mount
+    staleTime: 10 * 60 * 1000,
+  });
+};
+
+
 export const useWatchHistory = () => {
   return useQuery({
     queryKey: authKeys.watchHistory,
     queryFn: getWatchHistory,
-    staleTime: 2 * 60 * 1000, // 2 minutes
+    enabled: !!authStorage.getAccessToken(),
+    staleTime: 5 * 60 * 1000,
     select: (res) => res.data.data,
   });
 };
