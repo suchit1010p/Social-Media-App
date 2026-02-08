@@ -40,6 +40,16 @@ import { authStorage } from "../utils/authStorage";
 
 const ProtectedRoute = () => {
   const location = useLocation();
+  
+  // Check localStorage first - instant check, no API call
+  const hasToken = !!authStorage.getAccessToken();
+  
+  // Only fetch if we have a token
+  const { data: user, isLoading, isError } = useCurrentUser({
+    enabled: hasToken, // Don't call API if no token exists
+    retry: false, // Don't retry on 401 - just redirect
+    staleTime: 5 * 60 * 1000, // Cache for 5 minutes
+  });
 
   // Always attempt to fetch the user. 
   // If we have an in-memory token, it uses it.
